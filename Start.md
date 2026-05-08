@@ -1,5 +1,5 @@
 ### A Powerful, Personal Project in Progress
-LuminaVerse was recently created as a personal project to bridge the gap between biblical data and modern development. Because it is a passion project currently in its beta phase, it is very much a "work in progress."
+VerseLumen was recently created as a personal project to bridge the gap between biblical data and modern development. Because it is a passion project currently in its beta phase, it is very much a "work in progress."
 
 Here is what you should know before diving into the repository:
 
@@ -11,10 +11,10 @@ Navigating GitHub repositories.
 
 Compiling C++ programs on your local machine.
 
-Standalone Utility: Though it is still being refined, LuminaVerse is designed to function as a standalone toolset. It doesn't require a complex web of external dependencies to work once it is properly set up, making it a lean option for developers who want to manage their own Bible data.
+Standalone Utility: Though it is still being refined, VerseLumen is designed to function as a standalone toolset. It doesn't require a complex web of external dependencies to work once it is properly set up, making it a lean option for developers who want to manage their own Bible data.
 
 Who is it for?
-If you’re a developer or a tech enthusiast who enjoys "tinkering" with your tools as much as you enjoy using them, LuminaVerse offers a unique way to customize your Bible reading experience. However, if you prefer a finished, consumer-ready interface, you might find the YouVersion Bible App or The Bible Recap better suited for your daily habit while this project continues to mature.
+If you’re a developer or a tech enthusiast who enjoys "tinkering" with your tools as much as you enjoy using them, VerseLumen offers a unique way to customize your Bible reading experience. However, if you prefer a finished, consumer-ready interface, you might find the YouVersion Bible App or The Bible Recap better suited for your daily habit while this project continues to mature.
 
 ### GET STARTED TODAY
 
@@ -50,5 +50,5 @@ As you read, jot down one thing that stood out to you—a question, a command to
 By starting today, you will be celebrating the completion of the entire Bible by this time next year. You have the tools and the plan; all that remains is to open to page one.
 
 Navigating the Tech Side of Your Journey
-While the spiritual journey of reading the Bible is timeless, the tools we use to stay organized are constantly evolving. If you are looking to integrate a more technical edge into your study, it’s helpful to understand the current state of the LuminaVerse toolkit.
+While the spiritual journey of reading the Bible is timeless, the tools we use to stay organized are constantly evolving. If you are looking to integrate a more technical edge into your study, it’s helpful to understand the current state of the VerseLumen toolkit.
 

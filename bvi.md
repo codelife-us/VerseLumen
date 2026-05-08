@@ -31,7 +31,7 @@ A C++ program that renders a Bible verse reference (or custom text) to a JPEG im
 - Adjustable line spacing (`--linespacing`)
 - Reserve a portion of the image from any side, centering verse text in the remaining space (`--reserve`)
 - Custom font support
-- Config file (`.luminaverse` `[bvi]` section) stores per-folder defaults for version, size, colors, and style
+- Config file (`.verselumen` `[bvi]` section) stores per-folder defaults for version, size, colors, and style
 - Default output filename derived from the reference (e.g. `John_3_16.jpg`)
 - Auto-prompts to download the Bible translation file if not found
 
@@ -431,7 +431,7 @@ To list fonts available to ImageMagick:
 magick -list font
 ```
 
-## Config File (.luminaverse [bvi])
+## Config File (.verselumen [bvi])
 
 Run `--saveconfig` to save the current settings as defaults for the current folder. Any subsequent `bvi` run in that folder will use those values automatically. Command-line arguments always override the config.
 
@@ -446,7 +446,7 @@ Show current effective settings:
 ./bvi --showconfig
 ```
 
-The `[bvi]` section of `.luminaverse` is plain text and can be edited by hand:
+The `[bvi]` section of `.verselumen` is plain text and can be edited by hand:
 ```
 [bvi]
 bv               = KJV
@@ -537,4 +537,4 @@ Chapter and verse boundaries are respected using the loaded Bible file — navig
 - `BibleKJV.txt` — KJV Bible text (shared with gospel, downloaded on first use)
 - `BibleBSB.txt` — BSB Bible text (shared with gospel, downloaded on first use)
 - `BibleWEB.txt` — WEB Bible text (shared with gospel, downloaded on first use)
-- `.luminaverse` — Shared config file; `[bvi]` section created by `--saveconfig`
+- `.verselumen` — Shared config file; `[bvi]` section created by `--saveconfig`

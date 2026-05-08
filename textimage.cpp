@@ -83,10 +83,10 @@ static FILE* runPopen(const string& cmd, const char* mode) { return popen(cmd.c_
 #endif
 
 const string TI_VERSION  = "1.0";
-const string CONFIG_FILE = ".luminaverse";
+const string CONFIG_FILE = ".verselumen";
 const string SECTION     = "textimage";
 
-// ── Config file (.luminaverse, [textimage] section) ───────────────────────────
+// ── Config file (.verselumen, [textimage] section) ───────────────────────────
 
 map<string, string> loadConfig() {
     map<string, string> cfg;
@@ -224,8 +224,8 @@ void printHelp() {
     cout << "  --textoffy=N            Shift text vertically; positive=down, negative=up (default 0)\n";
     cout << "  --reserve=SIDE,PCT      Reserve PCT% (0-90) from SIDE (top/right/bottom/left);\n";
     cout << "                          repeat for multiple sides (e.g. --reserve=left,30 --reserve=top,20)\n\n";
-    cout << "Config file (.luminaverse in current directory or $HOME, [textimage] section):\n";
-    cout << "  --saveconfig            Save current settings to .luminaverse [textimage] as new defaults\n";
+    cout << "Config file (.verselumen in current directory or $HOME, [textimage] section):\n";
+    cout << "  --saveconfig            Save current settings to .verselumen [textimage] as new defaults\n";
     cout << "  --showconfig            Print current effective settings and exit\n\n";
     cout << "  Supported keys in [textimage]:  width  height  font  bg  bgphoto  dim  textcolor  textsize  maxtextsize  textscale  textpanel  textpanelcolor  textpanelrounded  textshadow  shadowmethod  textoutline  textoutlinecolor  linespacing  textoffy  reservetop  reserveright  reservebottom  reserveleft\n\n";
     cout << "Requires:\n";
@@ -505,7 +505,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    // ── --saveconfig: write [textimage] section of .luminaverse and exit ──
+    // ── --saveconfig: write [textimage] section of .verselumen and exit ──
     if (saveConfig) {
         vector<string> lines = {
             "width            = " + to_string(imgWidth),

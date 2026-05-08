@@ -24,14 +24,14 @@ BVI         = str(Path(__file__).parent / ("bvi.exe" if sys.platform == "win32" 
 BIBLES      = {"KJV": "BibleKJV.txt", "BSB": "BibleBSB.txt", "WEB": "BibleWEB.txt"}
 _tmp_fd, TMP_JPG = tempfile.mkstemp(suffix=".jpg", prefix="bvilive_")
 os.close(_tmp_fd)
-CONFIG_FILE = ".luminaverse"
+CONFIG_FILE = ".verselumen"
 
 PREVIEW_W = 960   # display width  (half of default 1920)
 PREVIEW_H = 540   # display height (half of default 1080)
 
 
 def load_bvi_config(path: str = CONFIG_FILE) -> dict:
-    """Parse the [bvi] section of .luminaverse, mirroring bvi.cpp's loadConfig()."""
+    """Parse the [bvi] section of .verselumen, mirroring bvi.cpp's loadConfig()."""
     cfg: dict = {}
     try:
         with open(path, encoding="utf-8-sig") as fh:
@@ -100,7 +100,7 @@ THEME_KEYS = [
 
 
 def find_bvilive_path() -> str:
-    """Return the .luminaverse path to use: local if present, else $HOME if present, else local."""
+    """Return the .verselumen path to use: local if present, else $HOME if present, else local."""
     local = CONFIG_FILE
     if os.path.exists(local):
         return local
@@ -111,7 +111,7 @@ def find_bvilive_path() -> str:
 
 
 def load_bvilive_state(path: str) -> dict:
-    """Parse [bvilive] section of .luminaverse → {last_ref, default_theme, themes:{name:{key:val}}}."""
+    """Parse [bvilive] section of .verselumen → {last_ref, default_theme, themes:{name:{key:val}}}."""
     state: dict = {"last_ref": "", "default_theme": "", "themes": {}}
     try:
         with open(path, encoding="utf-8-sig") as fh:
@@ -150,7 +150,7 @@ def load_bvilive_state(path: str) -> dict:
 
 
 def save_bvilive_state(path: str, state: dict):
-    """Write [bvilive] section of .luminaverse, preserving all other sections."""
+    """Write [bvilive] section of .verselumen, preserving all other sections."""
     new_lines: list[str] = []
     if state.get("last_ref"):
         new_lines.append(f"last_ref = {state['last_ref']}\n")

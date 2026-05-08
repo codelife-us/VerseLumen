@@ -30,7 +30,7 @@ A C++ program that displays various gospel presentation tracts, biblical framewo
 - Command-line configurable tract name and Bible version
 - Invalid command line options are reported with an error
 - Auto-prompts to download the Bible translation file if not found
-- Persistent config file (`.luminaverse` `[gospelshare]` section) to save default settings with `--saveconfig`
+- Persistent config file (`.verselumen` `[gospelshare]` section) to save default settings with `--saveconfig`
 - View effective settings (config + command-line) with `--showconfig`
 
 ## Building
@@ -318,7 +318,7 @@ winget install MiKTeX.MiKTeX
 
 ## Configuration File
 
-gospelshare reads defaults from the `[gospelshare]` section of `.luminaverse` in the current directory. Command-line arguments always override the config file.
+gospelshare reads defaults from the `[gospelshare]` section of `.verselumen` in the current directory. Command-line arguments always override the config file.
 
 Supported keys: `bv`, `tractname`, `refstyle`, `pdfmargin`, `pdffont`, `pdffontsize`, `outputtype`
 
@@ -327,7 +327,7 @@ Save current settings as new defaults:
 ./gospelshare -bv=BSB --refstyle=2 --saveconfig
 ```
 
-This writes a `[gospelshare]` section in `.luminaverse` like:
+This writes a `[gospelshare]` section in `.verselumen` like:
 ```
 [gospelshare]
 bv          = BSB
@@ -344,9 +344,9 @@ Print the effective settings (config file + any command-line overrides) and exit
 ./gospelshare -bv=WEB --showconfig    # preview what would be used without running
 ```
 
-To reset to built-in defaults, delete the `[gospelshare]` section from `.luminaverse` or remove the file entirely:
+To reset to built-in defaults, delete the `[gospelshare]` section from `.verselumen` or remove the file entirely:
 ```bash
-rm .luminaverse
+rm .verselumen
 ```
 
 ## Copying Output
@@ -383,7 +383,7 @@ If a Bible translation file is not found, the program will prompt you to downloa
 ## Files
 
 - `gospelshare.cpp` - Main program source code
-- `.luminaverse` - Shared config file; `[gospelshare]` section created by `--saveconfig`
+- `.verselumen` - Shared config file; `[gospelshare]` section created by `--saveconfig`
 - `BibleKJV.txt` - KJV Bible text (downloaded on first use)
 - `BibleBSB.txt` - BSB Bible text (downloaded on first use)
 - `BibleWEB.txt` - WEB Bible text (downloaded on first use)

@@ -90,13 +90,13 @@ static FILE* runPopen(const string& cmd, const char* mode) { return popen(cmd.c_
 #endif
 
 const string BVI_VERSION = "1.3";
-const string CONFIG_FILE = ".luminaverse";
+const string CONFIG_FILE = ".verselumen";
 const string SECTION     = "bvi";
 
-// ── Config file (.luminaverse, [bvi] section) ─────────────────────────────────
+// ── Config file (.verselumen, [bvi] section) ─────────────────────────────────
 
 // Read key=value pairs from the [bvi] section of CONFIG_FILE.
-// Falls back to $HOME/.luminaverse if not found in current directory.
+// Falls back to $HOME/.verselumen if not found in current directory.
 map<string, string> loadConfig() {
     map<string, string> cfg;
     ifstream f(CONFIG_FILE);
@@ -310,8 +310,8 @@ void printHelp() {
     cout << "  --textoffy=N            Shift verse text vertically; positive=down, negative=up (default 0)\n";
     cout << "  --citeoffy=N            Shift citation vertically; positive=toward bottom edge, negative=away (default 0)\n";
     cout << "  --reserve=SIDE,PCT      Reserve PCT% on SIDE (top/right/bottom/left); repeat for multiple sides\n\n";
-    cout << "Config file (.luminaverse in current directory or $HOME, [bvi] section):\n";
-    cout << "  --saveconfig            Save current settings to .luminaverse [bvi] as new defaults\n";
+    cout << "Config file (.verselumen in current directory or $HOME, [bvi] section):\n";
+    cout << "  --saveconfig            Save current settings to .verselumen [bvi] as new defaults\n";
     cout << "  --showconfig            Print current effective settings and exit\n\n";
     cout << "  Supported keys in [bvi]:  bv  width  height  font  bg  bgphoto  dim  textcolor  citecolor  citefont  quotes  citesize  citescale  citestyle  citeplacement  citebibleversion  citeshadow  citealign  citepanel  textsize  maxtextsize  textscale  textpanel  textpanelcolor  textpanelrounded  textshadow  shadowmethod  textoutline  textoutlinecolor  linespacing  textoffy  citeoffy  reservetop  reserveright  reservebottom  reserveleft\n\n";
     cout << "Requires:\n";
@@ -646,7 +646,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    // ── --saveconfig: write [bvi] section of .luminaverse and exit ────────
+    // ── --saveconfig: write [bvi] section of .verselumen and exit ────────
     if (saveConfig) {
         vector<string> lines = {
             "bv               = " + version,
@@ -715,13 +715,13 @@ int main(int argc, char* argv[]) {
         string bibleFile, bibleUrl;
         if (version == "KJV") {
             bibleFile = "BibleKJV.txt";
-            bibleUrl  = "https://raw.githubusercontent.com/codelife-us/LuminaVerse/main/BibleKJV.txt";
+            bibleUrl  = "https://raw.githubusercontent.com/codelife-us/VerseLumen/main/BibleKJV.txt";
         } else if (version == "BSB") {
             bibleFile = "BibleBSB.txt";
             bibleUrl  = "https://bereanbible.com/bsb.txt";
         } else if (version == "WEB") {
             bibleFile = "BibleWEB.txt";
-            bibleUrl  = "https://raw.githubusercontent.com/codelife-us/LuminaVerse/main/BibleWEB.txt";
+            bibleUrl  = "https://raw.githubusercontent.com/codelife-us/VerseLumen/main/BibleWEB.txt";
         } else {
             cerr << "Error: unsupported Bible version '" << version << "'.\n";
             cerr << "Supported versions: KJV, BSB, WEB\n";

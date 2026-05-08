@@ -53,7 +53,7 @@ using namespace std;
 #endif
 
 const string VERSION = "1.21";
-const string CONFIG_FILE = ".luminaverse";
+const string CONFIG_FILE = ".verselumen";
 const string SECTION     = "bv";
 // Reading plans
 static const char* const PLAN_CHRONOLOGICAL[365] = {
@@ -1564,8 +1564,8 @@ void printHelp() {
     cout << "                          Sequential (aliases: Canonical, Straight Through)" << endl;
     cout << "                          Old and New Testament (aliases: OTNT, OT and NT)" << endl;
     cout << "  --refonly               With --day: print only the reference string, no verse text" << endl;
-    cout << "\nConfig file (.luminaverse in current directory, [bv] section):" << endl;
-    cout << "  --saveconfig            Save current settings to .luminaverse [bv] as new defaults" << endl;
+    cout << "\nConfig file (.verselumen in current directory, [bv] section):" << endl;
+    cout << "  --saveconfig            Save current settings to .verselumen [bv] as new defaults" << endl;
     cout << "  --showconfig            Print current effective settings and exit" << endl;
     cout << "  Supported keys:  bv  refstyle  versequotes  plan" << endl;
     cout << "\nExamples:" << endl;
@@ -1827,11 +1827,11 @@ int main(int argc, char* argv[]) {
 
     string bibleFile, bibleUrl;
     if (version == "KJV") {
-        bibleFile = "BibleKJV.txt"; bibleUrl = "https://raw.githubusercontent.com/codelife-us/LuminaVerse/main/BibleKJV.txt";
+        bibleFile = "BibleKJV.txt"; bibleUrl = "https://raw.githubusercontent.com/codelife-us/VerseLumen/main/BibleKJV.txt";
     } else if (version == "BSB") {
         bibleFile = "BibleBSB.txt"; bibleUrl = "https://bereanbible.com/bsb.txt";
     } else if (version == "WEB") {
-        bibleFile = "BibleWEB.txt"; bibleUrl = "https://raw.githubusercontent.com/codelife-us/LuminaVerse/main/BibleWEB.txt";
+        bibleFile = "BibleWEB.txt"; bibleUrl = "https://raw.githubusercontent.com/codelife-us/VerseLumen/main/BibleWEB.txt";
     } else if (openGw) {
         goto bible_ready;  // unknown version passed through to Bible Gateway as-is
     } else {

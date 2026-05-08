@@ -1,4 +1,4 @@
-# LuminaVerse
+# VerseLumen
 
 A collection of tools for reading, sharing, and visualizing Scripture.
 
@@ -19,7 +19,7 @@ Outputs gospel presentation tracts — biblical frameworks for sharing the Gospe
 ./gospelshare --ref="John 3:16"         # look up a verse directly
 ```
 
-Config file: `.luminaverse` `[gospelshare]` | Full docs: [gospelshare.md](gospelshare.md)
+Config file: `.verselumen` `[gospelshare]` | Full docs: [gospelshare.md](gospelshare.md)
 
 ---
 
@@ -35,7 +35,7 @@ Lightweight Bible verse lookup. Look up any reference, verse range, or full chap
 ./bv --ref="John 3:16" -e              # open on ESV.org
 ```
 
-Config file: `.luminaverse` `[bv]` | Full docs: [bv.md](bv.md)
+Config file: `.verselumen` `[bv]` | Full docs: [bv.md](bv.md)
 
 ---
 
@@ -50,7 +50,7 @@ Renders a Bible verse (or custom text) as a JPEG image. Auto-fits the font size 
 ./bvi --text="He is risen." --bg=black --textcolor=white
 ```
 
-Config file: `.luminaverse` `[bvi]` | Full docs: [bvi.md](bvi.md)
+Config file: `.verselumen` `[bvi]` | Full docs: [bvi.md](bvi.md)
 
 ---
 

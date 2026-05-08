@@ -18,7 +18,7 @@ A C++ program that renders plain text to a JPEG image with auto-fitted text. The
 - Adjustable line spacing (`--linespacing`)
 - Reserve a portion of the image from any side, centering text in the remaining space (`--reserve`)
 - Custom font support
-- Config file (`.luminaverse` `[textimage]` section) stores per-folder defaults
+- Config file (`.verselumen` `[textimage]` section) stores per-folder defaults
 - Default output filename derived from the first few words of the text
 
 ## Building
@@ -304,7 +304,7 @@ To list fonts available to ImageMagick:
 magick -list font
 ```
 
-## Config File (.luminaverse [textimage])
+## Config File (.verselumen [textimage])
 
 Run `--saveconfig` to save the current settings as defaults for the current folder. Any subsequent `textimage` run in that folder will use those values automatically. Command-line arguments always override the config.
 
@@ -318,7 +318,7 @@ Show current effective settings:
 ./textimage --showconfig
 ```
 
-The `[textimage]` section of `.luminaverse` is plain text and can be edited by hand:
+The `[textimage]` section of `.verselumen` is plain text and can be edited by hand:
 ```
 [textimage]
 width            = 1920
@@ -357,4 +357,4 @@ The `text2` override keys are blank by default (inherit from the corresponding t
 ## Files
 
 - `textimage.cpp` — Source code
-- `.luminaverse` — Shared config file; `[textimage]` section created by `--saveconfig`
+- `.verselumen` — Shared config file; `[textimage]` section created by `--saveconfig`

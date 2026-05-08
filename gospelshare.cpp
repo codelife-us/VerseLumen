@@ -53,13 +53,13 @@ using namespace std;
 #endif
 
 const string VERSION = "1.3";
-const string CONFIG_FILE = ".luminaverse";
+const string CONFIG_FILE = ".verselumen";
 const string SECTION     = "gospelshare";
 
-// ── Config file (.luminaverse, [gospelshare] section; also $HOME/.luminaverse) ───────────
+// ── Config file (.verselumen, [gospelshare] section; also $HOME/.verselumen) ───────────
 
 // Read key=value pairs from the [gospelshare] section of CONFIG_FILE.
-// Falls back to $HOME/.luminaverse if not found in current directory.
+// Falls back to $HOME/.verselumen if not found in current directory.
 map<string, string> loadConfig() {
     map<string, string> cfg;
     ifstream f(CONFIG_FILE);
@@ -717,8 +717,8 @@ void printHelp() {
     cout << "  --outputall              Output .txt, .md, .pdf, .epub for every tract and Bible version" << endl;
     cout << "  --titlegraphic           Use cover image for .epub; default: {tractname}_1.jpg" << endl;
     cout << "  --titlegraphic=FILE      Use FILE as the .epub cover image" << endl;
-    cout << "\nConfig file (.luminaverse in current directory, [gospelshare] section):" << endl;
-    cout << "  --saveconfig             Save current settings to .luminaverse [gospelshare] as new defaults" << endl;
+    cout << "\nConfig file (.verselumen in current directory, [gospelshare] section):" << endl;
+    cout << "  --saveconfig             Save current settings to .verselumen [gospelshare] as new defaults" << endl;
     cout << "  --showconfig             Print current effective settings and exit" << endl;
     cout << "  Supported keys:  bv  tractname  refstyle  pdfmargin  pdffont  pdffontsize  outputtype" << endl;
     cout << "\nExamples:" << endl;
@@ -948,7 +948,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    // ── --saveconfig: write [gospelshare] section of .luminaverse and exit ─────
+    // ── --saveconfig: write [gospelshare] section of .verselumen and exit ─────
     if (saveConfig) {
         vector<string> lines = {
             "bv          = " + version,

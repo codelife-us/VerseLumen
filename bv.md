@@ -203,7 +203,7 @@ bv --ref="John 3:16" | clip
 
 ## Configuration File
 
-`bv` reads defaults from the `[bv]` section of `.luminaverse` in the current directory. Command-line arguments always override the config file.
+`bv` reads defaults from the `[bv]` section of `.verselumen` in the current directory. Command-line arguments always override the config file.
 
 Supported keys: `bv`, `refstyle`, `versequotes`, `plan`
 
@@ -212,7 +212,7 @@ Save current settings as defaults:
 ./bv -bv=BSB --refstyle=2 --plan=Sequential --saveconfig
 ```
 
-This writes a `[bv]` section in `.luminaverse` like:
+This writes a `[bv]` section in `.verselumen` like:
 ```
 [bv]
 bv          = BSB
@@ -227,9 +227,9 @@ Print effective settings and exit:
 ./bv -bv=WEB --showconfig
 ```
 
-To reset to built-in defaults, delete the `[bv]` section from `.luminaverse` or remove the file entirely:
+To reset to built-in defaults, delete the `[bv]` section from `.verselumen` or remove the file entirely:
 ```bash
-rm .luminaverse
+rm .verselumen
 ```
 
 ## Bible Translations

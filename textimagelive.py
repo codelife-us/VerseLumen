@@ -22,14 +22,14 @@ except ImportError:
 
 TEXTIMAGE   = str(Path(__file__).parent / ("textimage.exe" if sys.platform == "win32" else "textimage"))
 TMP_JPG     = tempfile.mktemp(suffix=".jpg", prefix="textimagelive_")
-CONFIG_FILE = ".luminaverse"
+CONFIG_FILE = ".verselumen"
 
 PREVIEW_W = 960
 PREVIEW_H = 540
 
 
 def load_textimage_config(path: str = CONFIG_FILE) -> dict:
-    """Parse the [textimage] section of .luminaverse."""
+    """Parse the [textimage] section of .verselumen."""
     cfg: dict = {}
     try:
         with open(path, encoding="utf-8-sig") as fh:
@@ -101,7 +101,7 @@ def find_live_path() -> str:
 
 
 def load_live_state(path: str) -> dict:
-    """Parse [textimagelive] section of .luminaverse."""
+    """Parse [textimagelive] section of .verselumen."""
     state: dict = {"default_theme": "", "themes": {}}
     try:
         with open(path, encoding="utf-8-sig") as fh:
@@ -140,7 +140,7 @@ def load_live_state(path: str) -> dict:
 
 
 def save_live_state(path: str, state: dict):
-    """Write [textimagelive] section of .luminaverse, preserving all other sections."""
+    """Write [textimagelive] section of .verselumen, preserving all other sections."""
     new_lines: list[str] = []
     if state.get("default_theme"):
         new_lines.append(f"default_theme = {state['default_theme']}\n")
@@ -235,7 +235,7 @@ class TextImageView:
         self._live_state = load_live_state(self._live_path)
         self.ui_scale = float(self._live_state.get("ui_scale", "1.0"))
         self._log_path = os.path.join(
-            os.path.dirname(os.path.abspath(self._live_path)), ".luminaverse.log"
+            os.path.dirname(os.path.abspath(self._live_path)), ".verselumen.log"
         )
 
         def _cfg(key, default=""):

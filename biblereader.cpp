@@ -18,8 +18,15 @@
 #include <cstring>
 #include <cctype>
 #include <csignal>
-#include <unistd.h>
-#include <sys/wait.h>
+#ifdef _WIN32
+# include <windows.h>
+# include <direct.h>   // _getcwd, _mkdir
+# include <process.h>  // _spawnlp, _P_NOWAIT
+typedef intptr_t pid_t;
+#else
+# include <unistd.h>
+# include <sys/wait.h>
+#endif
 
 #ifdef _WIN32
 # define HOME_ENV "USERPROFILE"
@@ -77,6 +84,26 @@ static void loadBible(const string& path) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+static string base64Encode(const string& src) {
+    static const char T[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    string r;
+    r.reserve((src.size() + 2) / 3 * 4);
+    size_t i = 0;
+    for (; i + 3 <= src.size(); i += 3) {
+        unsigned char a = src[i], b = src[i+1], c = src[i+2];
+        r += T[a>>2]; r += T[((a&3)<<4)|(b>>4)];
+        r += T[((b&15)<<2)|(c>>6)]; r += T[c&63];
+    }
+    if (i + 1 == src.size()) {
+        unsigned char a = src[i];
+        r += T[a>>2]; r += T[(a&3)<<4]; r += "==";
+    } else if (i + 2 == src.size()) {
+        unsigned char a = src[i], b = src[i+1];
+        r += T[a>>2]; r += T[((a&3)<<4)|(b>>4)]; r += T[(b&15)<<2]; r += '=';
+    }
+    return r;
+}
+
 static string htmlEsc(const string& s) {
     string r;
     for (char c : s) {
@@ -104,12 +131,27 @@ static string jsEsc(const string& s) {
 // ── Process management ────────────────────────────────────────────────────────
 
 static string g_tempDir;
+static bool   g_cleaned = false;
+#ifdef _WIN32
+static HANDLE g_serverHandle = NULL;   // _spawnlp _P_NOWAIT returns a HANDLE, not a PID
+#else
 static pid_t  g_serverPid = -1;
-static bool   g_cleaned   = false;
+#endif
 
 static void doCleanup() {
     if (g_cleaned) return;
     g_cleaned = true;
+#ifdef _WIN32
+    if (g_serverHandle) {
+        TerminateProcess(g_serverHandle, 1);
+        CloseHandle(g_serverHandle);
+        g_serverHandle = NULL;
+    }
+    if (!g_tempDir.empty()) {
+        system(("rd /s /q \"" + g_tempDir + "\"").c_str());
+        g_tempDir.clear();
+    }
+#else
     if (g_serverPid > 0) {
         kill(g_serverPid, SIGTERM);
         waitpid(g_serverPid, nullptr, WNOHANG);
@@ -119,40 +161,66 @@ static void doCleanup() {
         system(("rm -rf \"" + g_tempDir + "\"").c_str());
         g_tempDir.clear();
     }
+#endif
 }
 
 static void sigHandler(int) { doCleanup(); exit(0); }
 
 // ── Python server ─────────────────────────────────────────────────────────────
 
-static string makePythonServer() {
-    return R"python(#!/usr/bin/env python3
-import http.server, urllib.parse, os, sys
-
-PORT    = int(sys.argv[1]) if len(sys.argv) > 1 else 7778
-BASE    = os.path.dirname(os.path.abspath(__file__))
-SELFILE = os.path.join(BASE, 'selected.txt')
-
-class Handler(http.server.SimpleHTTPRequestHandler):
-    def __init__(self, *a, **kw):
-        super().__init__(*a, directory=BASE, **kw)
-    def do_GET(self):
-        if self.path.startswith('/pick'):
-            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-            if 'ref' in q:
-                with open(SELFILE, 'w') as f:
-                    f.write(q['ref'][0])
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b'ok')
-        else:
-            super().do_GET()
-    def log_message(self, *a):
-        pass
-
-with http.server.HTTPServer(('127.0.0.1', PORT), Handler) as httpd:
-    httpd.serve_forever()
-)python";
+// HTML is base64-embedded in server.py to avoid AV quarantine of .html files in %TEMP%
+static string makePythonServer(const string& html) {
+    ostringstream py;
+    py << "#!/usr/bin/env python3\n"
+          "import http.server, urllib.parse, os, sys, base64\n"
+          "\n"
+          "PORT    = int(sys.argv[1]) if len(sys.argv) > 1 else 7778\n"
+          "BASE    = os.path.dirname(os.path.abspath(__file__))\n"
+          "SELFILE = os.path.join(BASE, 'selected.txt')\n"
+          "_HTML   = base64.b64decode(b\""
+       << base64Encode(html)
+       << "\")\n"
+          "\n"
+          "def serve_file(handler, rel_path, content_type):\n"
+          "    path = os.path.join(BASE, rel_path)\n"
+          "    try:\n"
+          "        with open(path, 'rb') as f:\n"
+          "            data = f.read()\n"
+          "        handler.send_response(200)\n"
+          "        handler.send_header('Content-Type', content_type)\n"
+          "        handler.send_header('Content-Length', str(len(data)))\n"
+          "        handler.end_headers()\n"
+          "        handler.wfile.write(data)\n"
+          "    except Exception as e:\n"
+          "        handler.send_error(500, str(e))\n"
+          "\n"
+          "class Handler(http.server.BaseHTTPRequestHandler):\n"
+          "    def do_GET(self):\n"
+          "        p = urllib.parse.urlparse(self.path).path\n"
+          "        if p.startswith('/pick'):\n"
+          "            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)\n"
+          "            if 'ref' in q:\n"
+          "                with open(SELFILE, 'w') as f:\n"
+          "                    f.write(q['ref'][0])\n"
+          "            self.send_response(200)\n"
+          "            self.end_headers()\n"
+          "            self.wfile.write(b'ok')\n"
+          "        elif p in ('/', '/index.html'):\n"
+          "            self.send_response(200)\n"
+          "            self.send_header('Content-Type', 'text/html; charset=utf-8')\n"
+          "            self.send_header('Content-Length', str(len(_HTML)))\n"
+          "            self.end_headers()\n"
+          "            self.wfile.write(_HTML)\n"
+          "        elif p.startswith('/Bible') and p.endswith('.txt'):\n"
+          "            serve_file(self, os.path.basename(p), 'text/plain; charset=utf-8')\n"
+          "        else:\n"
+          "            self.send_error(404)\n"
+          "    def log_message(self, *a):\n"
+          "        pass\n"
+          "\n"
+          "with http.server.HTTPServer(('127.0.0.1', PORT), Handler) as httpd:\n"
+          "    httpd.serve_forever()\n";
+    return py.str();
 }
 
 // ── HTML / JS generation ──────────────────────────────────────────────────────
@@ -667,8 +735,19 @@ int main(int argc, char* argv[]) {
     }
 
     if (csvMode || tabMode) {
+#ifdef _WIN32
+        char exeBuf[MAX_PATH] = {};
+        GetModuleFileNameA(NULL, exeBuf, MAX_PATH);
+        string exeDir = string(exeBuf);
+        size_t sl = exeDir.find_last_of("\\/");
+        if (sl != string::npos) exeDir = exeDir.substr(0, sl + 1); else exeDir = "";
+        string bvPath = exeDir + "bv.exe";
+        string baseBv;
+        { ifstream t(bvPath); baseBv = t.good() ? "\"" + bvPath + "\"" : "bv"; }
+#else
         ifstream localBv("./bv");
         string baseBv = localBv.good() ? "./bv" : "bv";
+#endif
         string cmd = baseBv + (csvMode ? " --alldays --csv" : " --alldays --tab");
         if (!planArg.empty())  cmd += " --plan="  + planArg;
         if (!startArg.empty()) cmd += " --start=" + startArg;
@@ -678,9 +757,9 @@ int main(int argc, char* argv[]) {
     transform(version.begin(), version.end(), version.begin(), ::toupper);
 
     string bibleFile, bibleUrl;
-    if      (version == "KJV") { bibleFile = "BibleKJV.txt"; bibleUrl = "https://raw.githubusercontent.com/codelife-us/LuminaVerse/main/BibleKJV.txt"; }
+    if      (version == "KJV") { bibleFile = "BibleKJV.txt"; bibleUrl = "https://raw.githubusercontent.com/codelife-us/VerseLumen/main/BibleKJV.txt"; }
     else if (version == "BSB") { bibleFile = "BibleBSB.txt"; bibleUrl = "https://bereanbible.com/bsb.txt"; }
-    else if (version == "WEB") { bibleFile = "BibleWEB.txt"; bibleUrl = "https://raw.githubusercontent.com/codelife-us/LuminaVerse/main/BibleWEB.txt"; }
+    else if (version == "WEB") { bibleFile = "BibleWEB.txt"; bibleUrl = "https://raw.githubusercontent.com/codelife-us/VerseLumen/main/BibleWEB.txt"; }
     else { cerr << "Unknown version '" << version << "'. Use KJV, BSB, or WEB.\n"; return 1; }
 
     // Resolve file path
@@ -736,12 +815,23 @@ int main(int argc, char* argv[]) {
     atexit(doCleanup);
 
     // Create temp dir
-    char tmp[] = "/tmp/biblereader_XXXXXX";
-    const char* td = mkdtemp(tmp);
-    if (!td) { perror("mkdtemp"); return 1; }
-    g_tempDir = td;
+#ifdef _WIN32
+    {
+        char base[MAX_PATH];
+        GetTempPathA(MAX_PATH, base);
+        g_tempDir = string(base) + "biblereader_" + to_string(GetCurrentProcessId());
+        if (_mkdir(g_tempDir.c_str()) != 0) { perror("mkdir"); return 1; }
+    }
+#else
+    {
+        char tmp[] = "/tmp/biblereader_XXXXXX";
+        const char* td = mkdtemp(tmp);
+        if (!td) { perror("mkdtemp"); return 1; }
+        g_tempDir = td;
+    }
+#endif
 
-    // Symlink all available Bible files into temp dir for version switching
+    // Copy all available Bible files into temp dir for version switching
     struct VPair { const char* ver; const char* fname; };
     const VPair allVers[] = {
         {"KJV", "BibleKJV.txt"},
@@ -749,9 +839,15 @@ int main(int argc, char* argv[]) {
         {"WEB", "BibleWEB.txt"}
     };
     auto toAbsolute = [](const string& path) -> string {
+#ifdef _WIN32
+        if (path.size() >= 2 && path[1] == ':') return path;
+        char buf[MAX_PATH];
+        if (_getcwd(buf, sizeof(buf))) return string(buf) + "/" + path;
+#else
         if (path.empty() || path[0] == '/') return path;
         char buf[4096];
         if (getcwd(buf, sizeof(buf))) return string(buf) + "/" + path;
+#endif
         return path;
     };
     vector<string> available;
@@ -772,15 +868,59 @@ int main(int argc, char* argv[]) {
         }
         if (path.empty()) continue;
         available.push_back(vp.ver);
-        symlink(toAbsolute(path).c_str(), (g_tempDir + "/" + vp.fname).c_str());
+        string dest = g_tempDir + "/" + vp.fname;
+#ifdef _WIN32
+        CopyFileA(toAbsolute(path).c_str(), dest.c_str(), FALSE);
+#else
+        symlink(toAbsolute(path).c_str(), dest.c_str());
+#endif
     }
 
     cerr << "Generating page..." << flush;
-    { ofstream f(g_tempDir + "/server.py");  f << makePythonServer();                      }
-    { ofstream f(g_tempDir + "/index.html"); f << makeHtml(version, copyVerse, available); }
-    cerr << " done.\n";
+    {
+        string html    = makeHtml(version, copyVerse, available);
+        string pyScript = makePythonServer(html);
+        cerr << " " << html.size() << " bytes HTML, "
+             << pyScript.size() << " bytes server.\n" << flush;
+#ifdef _WIN32
+        wstring wpath(g_tempDir.begin(), g_tempDir.end());
+        wpath += L"\\server.py";
+        FILE* fp = _wfopen(wpath.c_str(), L"wb");
+        if (!fp) { cerr << "ERROR: cannot write server.py\n"; doCleanup(); return 1; }
+        fwrite(pyScript.data(), 1, pyScript.size(), fp);
+        fclose(fp);
+#else
+        ofstream f(g_tempDir + "/server.py");
+        if (!f) { cerr << "ERROR: cannot write server.py\n"; doCleanup(); return 1; }
+        f << pyScript;
+#endif
+    }
 
-    // Fork Python server
+    // Launch Python server
+#ifdef _WIN32
+    {
+        // _spawnlp _P_NOWAIT returns a process HANDLE (intptr_t), not a PID.
+        // Try Python Launcher (py -3) first — avoids Microsoft Store alias that
+        // breaks programmatic launch. Fall back to python / python3.
+        string script  = g_tempDir + "\\server.py";
+        string portStr = to_string(port);
+        struct { const char* exe; bool dash3; } tries[] = {
+            {"py",      true },
+            {"python",  false},
+            {"python3", false},
+        };
+        for (auto& t : tries) {
+            intptr_t h = t.dash3
+                ? _spawnlp(_P_NOWAIT, t.exe, t.exe, "-3", script.c_str(), portStr.c_str(), nullptr)
+                : _spawnlp(_P_NOWAIT, t.exe, t.exe,       script.c_str(), portStr.c_str(), nullptr);
+            if (h != -1) { g_serverHandle = (HANDLE)h; break; }
+        }
+        if (!g_serverHandle) {
+            cerr << "ERROR: cannot start Python. Install Python from python.org.\n";
+            doCleanup(); return 1;
+        }
+    }
+#else
     g_serverPid = fork();
     if (g_serverPid == 0) {
         execlp("python3", "python3",
@@ -789,22 +929,32 @@ int main(int argc, char* argv[]) {
         _exit(1);
     }
     if (g_serverPid < 0) { perror("fork"); doCleanup(); return 1; }
+#endif
 
+#ifdef _WIN32
+    Sleep(400);
+#else
     usleep(400000);
+#endif
 
     string url = "http://localhost:" + to_string(port) + "/";
+#ifdef _WIN32
+    system(("start \"\" \"" + url + "\"").c_str());
+#else
     system(("open \"" + url + "\"").c_str());
+#endif
     cerr << "Opened " << url << "\n";
     cerr << "Press Enter to quit.\n";
 
     cin.get();
 
-    // Print last selected reference
-    string selFile = g_tempDir + "/selected.txt";
-    ifstream sf(selFile);
-    if (sf.good()) {
+    // Print last selected reference (close before cleanup so Windows can delete the file)
+    {
+        string selFile = g_tempDir + "/selected.txt";
+        ifstream sf(selFile);
         string ref;
-        getline(sf, ref);
+        if (sf.good()) getline(sf, ref);
+        sf.close();
         if (!ref.empty()) cout << ref << "\n";
     }
 
