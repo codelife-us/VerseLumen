@@ -87,6 +87,8 @@ THEME_KEYS = [
     ("text2outlinecolor", "text2outlinecolor_var",  "str",  ""),
     ("text2shadow",       "text2shadow_var",        "str",  ""),
     ("text2shadowmethod", "text2shadowmethod_var",  "str",  ""),
+    ("text2size",         "text2size_var",          "str",  ""),
+    ("text2maxtextsize",  "text2maxtextsize_var",   "str",  ""),
 ]
 
 
@@ -276,6 +278,8 @@ class TextImageView:
         self.text2outlinecolor_var  = tk.StringVar(value=_cfg("text2outlinecolor", ""))
         self.text2shadow_var        = tk.StringVar(value=_cfg("text2shadow",       ""))
         self.text2shadowmethod_var  = tk.StringVar(value=_cfg("text2shadowmethod", ""))
+        self.text2size_var          = tk.StringVar(value=_cfg("text2size",         ""))
+        self.text2maxtextsize_var   = tk.StringVar(value=_cfg("text2maxtextsize",  ""))
         half_size_saved         = self._live_state.get("half_size", "yes")
         self.half_size_var      = tk.BooleanVar(value=half_size_saved != "no")
         self.status_var         = tk.StringVar(value="Ready")
@@ -359,41 +363,66 @@ class TextImageView:
         tk.Entry(f, textvariable=self.textoffy_var, width=5).grid(row=4, column=3, sticky="w", **pad)
         self.textoffy_var.trace_add("write", lambda *_: self._schedule(400))
 
-        # ── Row 5: BG color / Text panel color ───────────────────────────────
-        self._make_color_row(f, "BG:",               self.bg_var,             5)
-        self._make_color_row(f, "Text panel color:", self.textpanelcolor_var, 6)
+        # ── Row 5: BG color + BG Dim % ───────────────────────────────────────
+        tk.Label(f, text="BG color:").grid(row=5, column=0, sticky="e", **pad)
+        _bg_f = tk.Frame(f)
+        _bg_f.grid(row=5, column=1, sticky="w", **pad)
+        tk.Entry(_bg_f, textvariable=self.bg_var, width=12).pack(side="left")
+        _bg_swatch = tk.Label(_bg_f, width=2, relief="solid", cursor="hand2")
+        _bg_swatch.pack(side="left", padx=(4, 2))
+        tk.Button(_bg_f, text="…", padx=2,
+                  command=lambda: self._pick_color(self.bg_var, _bg_swatch)).pack(side="left")
+        def _refresh_bg(*_):
+            color = self.bg_var.get().strip() or "gray50"
+            try:    _bg_swatch.config(bg=color)
+            except: _bg_swatch.config(bg="gray50")
+            self._schedule(400)
+        self.bg_var.trace_add("write", _refresh_bg)
+        _bg_swatch.bind("<Button-1>", lambda _: self._pick_color(self.bg_var, _bg_swatch))
+        _refresh_bg()
+        tk.Label(f, text="BG Dim %:").grid(row=5, column=2, sticky="e", **pad)
+        tk.Entry(f, textvariable=self.dim_var, width=5).grid(row=5, column=3, sticky="w", **pad)
+        self.dim_var.trace_add("write", lambda *_: self._schedule(400))
 
-        # ── Row 7: BG Photo ───────────────────────────────────────────────────
-        tk.Label(f, text="BG photo:").grid(row=7, column=0, sticky="e", **pad)
-        tk.Entry(f, textvariable=self.bgphoto_var, width=28).grid(row=7, column=1, columnspan=2, sticky="ew", **pad)
+        # ── Row 6: BG Photo ───────────────────────────────────────────────────
+        tk.Label(f, text="BG photo:").grid(row=6, column=0, sticky="e", **pad)
+        tk.Entry(f, textvariable=self.bgphoto_var, width=28).grid(row=6, column=1, columnspan=2, sticky="ew", **pad)
         self.bgphoto_var.trace_add("write", lambda *_: self._schedule(400))
         tk.Button(f, text="…", padx=2,
-                  command=self._browse_bgphoto).grid(row=7, column=3, sticky="w", padx=(0, 6), pady=round(3 * s))
+                  command=self._browse_bgphoto).grid(row=6, column=3, sticky="w", padx=(0, 6), pady=round(3 * s))
 
-        # ── Row 8: Dim % / Text panel % + Rounded / Line spacing ─────────────
-        tk.Label(f, text="Dim %:").grid(row=8, column=0, sticky="e", **pad)
-        tk.Entry(f, textvariable=self.dim_var, width=5).grid(row=8, column=1, sticky="w", **pad)
-        self.dim_var.trace_add("write", lambda *_: self._schedule(400))
-        tp_frame = tk.Frame(f)
-        tp_frame.grid(row=8, column=2, sticky="w", **pad)
-        tk.Label(tp_frame, text="Panel %:").pack(side="left")
-        tk.Entry(tp_frame, textvariable=self.textpanel_var, width=4).pack(side="left", padx=(2, 4))
-        tk.Checkbutton(tp_frame, text="Rounded", variable=self.panelrounded_var,
+        # ── Row 7: Panel color + Panel Dim % + Rounded ───────────────────────
+        tk.Label(f, text="Panel color:").grid(row=7, column=0, sticky="e", **pad)
+        _panel_f = tk.Frame(f)
+        _panel_f.grid(row=7, column=1, sticky="w", **pad)
+        tk.Entry(_panel_f, textvariable=self.textpanelcolor_var, width=12).pack(side="left")
+        _panel_swatch = tk.Label(_panel_f, width=2, relief="solid", cursor="hand2")
+        _panel_swatch.pack(side="left", padx=(4, 2))
+        tk.Button(_panel_f, text="…", padx=2,
+                  command=lambda: self._pick_color(self.textpanelcolor_var, _panel_swatch)).pack(side="left")
+        def _refresh_panel(*_):
+            color = self.textpanelcolor_var.get().strip() or "gray50"
+            try:    _panel_swatch.config(bg=color)
+            except: _panel_swatch.config(bg="gray50")
+            self._schedule(400)
+        self.textpanelcolor_var.trace_add("write", _refresh_panel)
+        _panel_swatch.bind("<Button-1>", lambda _: self._pick_color(self.textpanelcolor_var, _panel_swatch))
+        _refresh_panel()
+        _tp_right = tk.Frame(f)
+        _tp_right.grid(row=7, column=2, columnspan=2, sticky="w", **pad)
+        tk.Label(_tp_right, text="Panel Dim %:").pack(side="left")
+        tk.Entry(_tp_right, textvariable=self.textpanel_var, width=4).pack(side="left", padx=(2, 8))
+        tk.Checkbutton(_tp_right, text="Rounded", variable=self.panelrounded_var,
                        command=lambda: self._schedule(0)).pack(side="left")
         self.textpanel_var.trace_add("write", lambda *_: self._schedule(400))
 
-        # ── Row 9: Line spacing / Reserve % ──────────────────────────────────
+        # ── Row 9: Line spacing / Gap between texts ───────────────────────────
         tk.Label(f, text="Line spacing:").grid(row=9, column=0, sticky="e", **pad)
         tk.Entry(f, textvariable=self.linespacing_var, width=5).grid(row=9, column=1, sticky="w", **pad)
         self.linespacing_var.trace_add("write", lambda *_: self._schedule(400))
-        tk.Label(f, text="Reserve %:").grid(row=9, column=2, sticky="e", **pad)
-        res_frame = tk.Frame(f)
-        res_frame.grid(row=9, column=3, sticky="w", **pad)
-        for _lbl, _var in (("T", self.reserve_top_var), ("R", self.reserve_right_var),
-                            ("B", self.reserve_bottom_var), ("L", self.reserve_left_var)):
-            tk.Label(res_frame, text=f"{_lbl}:").pack(side="left")
-            tk.Entry(res_frame, textvariable=_var, width=3).pack(side="left", padx=(0, 4))
-            _var.trace_add("write", lambda *_: self._schedule(400))
+        tk.Label(f, text="Gap between texts:").grid(row=9, column=2, sticky="e", **pad)
+        tk.Entry(f, textvariable=self.text2gap_var, width=4).grid(row=9, column=3, sticky="w", **pad)
+        self.text2gap_var.trace_add("write", lambda *_: self._schedule(400))
 
         # ── Row 10: Text 1 ────────────────────────────────────────────────────
         tk.Label(f, text="Text 1:").grid(row=10, column=0, sticky="ne", padx=8, pady=6)
@@ -403,17 +432,20 @@ class TextImageView:
         self.text_widget.bind("<KeyRelease>", lambda _: self._schedule(400))
         self.text_widget.bind("<<Paste>>",    lambda _: self._schedule(500))
 
-        # ── Row 11: Text 1 font / Text gap ───────────────────────────────────
+        # ── Row 11: Text 1 font / Reserve % ──────────────────────────────────
         tk.Label(f, text="Text 1 font:").grid(row=11, column=0, sticky="e", **pad)
         tk.Entry(f, textvariable=self.font_var, width=20).grid(row=11, column=1, sticky="ew", **pad)
         self.font_var.trace_add("write", lambda *_: self._schedule(400))
         tk.Button(f, text="…", padx=2,
                   command=self._browse_font).grid(row=11, column=2, sticky="w", padx=(0, 4), pady=round(3 * s))
-        _gap_f = tk.Frame(f)
-        _gap_f.grid(row=11, column=3, sticky="w", **pad)
-        tk.Label(_gap_f, text="Gap between texts:").pack(side="left", padx=(0, 3))
-        tk.Entry(_gap_f, textvariable=self.text2gap_var, width=4).pack(side="left")
-        self.text2gap_var.trace_add("write", lambda *_: self._schedule(400))
+        res_frame = tk.Frame(f)
+        res_frame.grid(row=11, column=3, sticky="w", **pad)
+        tk.Label(res_frame, text="Reserve %:").pack(side="left", padx=(0, 4))
+        for _lbl, _var in (("T", self.reserve_top_var), ("R", self.reserve_right_var),
+                            ("B", self.reserve_bottom_var), ("L", self.reserve_left_var)):
+            tk.Label(res_frame, text=f"{_lbl}:").pack(side="left")
+            tk.Entry(res_frame, textvariable=_var, width=3).pack(side="left", padx=(0, 4))
+            _var.trace_add("write", lambda *_: self._schedule(400))
 
         # ── Row 12: Text 1 color ──────────────────────────────────────────────
         tk.Label(f, text="Text 1 color:").grid(row=12, column=0, sticky="e", **pad)
@@ -529,9 +561,17 @@ class TextImageView:
                 pass
         self.text2shadowmethod_var.trace_add("write", _sync_t2sm_cb)
 
-        # ── Row 20: Status ────────────────────────────────────────────────────
+        # ── Row 20: Text 2 pt / Max Text 2 pt ────────────────────────────────
+        tk.Label(f, text="Text 2 pt:").grid(row=20, column=0, sticky="e", **pad)
+        tk.Entry(f, textvariable=self.text2size_var, width=6).grid(row=20, column=1, sticky="w", **pad)
+        self.text2size_var.trace_add("write", lambda *_: self._schedule(400))
+        tk.Label(f, text="Max Text 2 pt:").grid(row=20, column=2, sticky="e", **pad)
+        tk.Entry(f, textvariable=self.text2maxtextsize_var, width=6).grid(row=20, column=3, sticky="w", **pad)
+        self.text2maxtextsize_var.trace_add("write", lambda *_: self._schedule(400))
+
+        # ── Row 21: Status ────────────────────────────────────────────────────
         tk.Label(f, textvariable=self.status_var, fg="gray45",
-                 anchor="w", width=46).grid(row=20, column=0, columnspan=4, **pad)
+                 anchor="w", width=46).grid(row=21, column=0, columnspan=4, **pad)
 
     def _make_color_row(self, parent, label: str, var: tk.StringVar, row: int, col_start: int = 0):
         s = getattr(self, 'ui_scale', 1.0)
@@ -995,14 +1035,23 @@ class TextImageView:
         tscale = int(ts) if re.fullmatch(r"\d+", ts) else 100
         target_w = int(img_w * 0.896 * tscale / 100.0)
         target_h = int(img_h * 0.741 * tscale / 100.0)
-        for _side, _var in (("top",    self.reserve_top_var),    ("right",  self.reserve_right_var),
-                             ("bottom", self.reserve_bottom_var), ("left",   self.reserve_left_var)):
-            _pct = _var.get().strip()
-            if re.fullmatch(r'\d+', _pct) and int(_pct) > 0:
-                if _side in ("top", "bottom"):
-                    target_h = max(1, int(target_h * (1.0 - int(_pct) / 100.0)))
-                else:
-                    target_w = max(1, int(target_w * (1.0 - int(_pct) / 100.0)))
+        def _pct_val(var):
+            v = var.get().strip()
+            return int(v) if re.fullmatch(r'\d+', v) and int(v) > 0 else 0
+        frac_top    = _pct_val(self.reserve_top_var)    / 100.0
+        frac_bottom = _pct_val(self.reserve_bottom_var) / 100.0
+        frac_left   = _pct_val(self.reserve_left_var)   / 100.0
+        frac_right  = _pct_val(self.reserve_right_var)  / 100.0
+        target_w = max(1, int(target_w * (1.0 - frac_left - frac_right)))
+        target_h = max(1, int(target_h * (1.0 - frac_top  - frac_bottom)))
+        # When text2 is present, textimage splits height: (textH - gap) / 2
+        text2 = self.text2_widget.get("1.0", "end-1c").strip()
+        if text2:
+            try:
+                gap = int(self.text2gap_var.get().strip() or "40")
+            except ValueError:
+                gap = 40
+            target_h = max(1, (target_h - max(0, gap)) // 2)
         ls = self.linespacing_var.get().strip()
         linespacing = int(ls) if re.fullmatch(r"-?\d+", ls) and ls != "0" else 0
         hi = min(target_w // 2, target_h)
@@ -1167,6 +1216,12 @@ class TextImageView:
             t2shadowmethod = self.text2shadowmethod_var.get().strip()
             if t2shadowmethod and t2shadowmethod != "1":
                 cmd.append(f"--text2shadowmethod={t2shadowmethod}")
+            t2size = self.text2size_var.get().strip()
+            if re.fullmatch(r'\d+', t2size) and int(t2size) > 0:
+                cmd.append(f"--text2size={t2size}")
+            t2maxsize = self.text2maxtextsize_var.get().strip()
+            if re.fullmatch(r'\d+', t2maxsize) and int(t2maxsize) > 0:
+                cmd.append(f"--text2maxtextsize={t2maxsize}")
 
         return cmd
 
