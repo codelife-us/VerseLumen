@@ -25,7 +25,7 @@ g++ -std=c++11 -o day day.cpp
 | `-d=N`, `--day=N` | Use day N instead of today |
 | `-d=mm/dd/yyyy` | Use a date instead of a day number (4-digit or 2-digit year) |
 | `-y`, `--youtube` | Open YouTube Bible Recap search |
-| `-a`, `--app` | Open YouTube in the browser set by `browser=` in `.verselumen`; macOS default (no setting): Google Chrome; implies `-y` |
+| `-a`, `--app` | Open YouTube in the browser set by `browser=` in `.verselumen`; falls back to system default browser if not set; implies `-y` |
 | `-q=TEXT`, `--query=TEXT` | Override the YouTube search query (`{day}` = day number); implies `-y` |
 | `-r`, `--refonly` | Print Bible reference only |
 | `-p`, `--plan` | Print day number, date, and Bible reference |
@@ -51,7 +51,7 @@ The `.verselumen` file (current directory or `$HOME`) holds shared settings for 
 
 | Key | Description | Default |
 |-----|-------------|---------|
-| `browser` | Browser used by `-a` | macOS: `Google Chrome`; others: system default |
+| `browser` | Browser used by `-a` | system default browser |
 
 Example:
 ```

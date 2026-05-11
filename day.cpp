@@ -101,8 +101,6 @@ static void openUrl(const string& url, bool useApp = false) {
 #elif defined(__APPLE__)
     if (!browser.empty())
         system(("open -a \"" + browser + "\" \"" + url + "\"").c_str());
-    else if (useApp)
-        system(("open -a \"Google Chrome\" \"" + url + "\"").c_str());
     else
         system(("open \"" + url + "\"").c_str());
 #else
@@ -158,7 +156,7 @@ int main(int argc, char* argv[]) {
                  << "  -d=mm/dd/yyyy          Use date instead of day number (4-digit or 2-digit year)\n"
                  << "  -y, --youtube          Open YouTube daily search\n"
                  << "  -a, --app              Open YouTube in browser set by .verselumen browser=; implies -y\n"
-                 << "                         macOS default (no browser= set): Google Chrome\n"
+                 << "                         falls back to system default browser if browser= is not set\n"
                  << "  -q=TEXT, --query=TEXT  Override search query ({day} = day number); implies -y\n"
                  << "  -p, --plan             Print day number, date, and Bible reference\n"
                  << "  -r, --refonly          Print Bible reference only\n"
@@ -170,7 +168,7 @@ int main(int argc, char* argv[]) {
                  << "  .day          First non-blank, non-comment line is the default search query.\n"
                  << "                Example:  Day {day} The Bible Recap\n"
                  << "  .verselumen   Key=value settings. Supported keys:\n"
-                 << "                  browser=Firefox     # browser for -a (macOS default: Google Chrome)\n"
+                 << "                  browser=Firefox     # browser for -a (default: system browser)\n"
                  << "                  macOS: app name for open -a; Windows: executable; Linux: command\n\n"
                  << "Examples:\n"
                  << "  day                               # print day number\n"
