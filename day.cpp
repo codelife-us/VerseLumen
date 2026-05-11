@@ -4,7 +4,7 @@
 // day.cpp — Print the current day of the year (Jan 1 = 1)
 // Build: g++ -std=c++11 -o day day.cpp
 // Default: print day number only.
-// -y/--youtube opens YouTube Bible Recap search.
+// -y/--youtube opens YouTube daily search.
 // Query template loaded from .day in current dir or $HOME.
 #include <iostream>
 #include <fstream>
@@ -64,13 +64,52 @@ static string urlEncode(const string& s) {
     return r;
 }
 
-static void openUrl(const string& url) {
+// Read a single key=value from .verselumen in current dir, then $HOME.
+// Lines starting with # are ignored.
+static string loadVerselumenSetting(const string& key) {
+    string paths[2] = {".verselumen", ""};
+    const char* home = getenv("HOME");
+    if (home) paths[1] = string(home) + "/.verselumen";
+
+    for (const string& path : paths) {
+        if (path.empty()) continue;
+        ifstream f(path);
+        if (!f.good()) continue;
+        string line;
+        while (getline(f, line)) {
+            size_t s = line.find_first_not_of(" \t\r\n");
+            if (s == string::npos || line[s] == '#') continue;
+            if (line.substr(s, key.size()) != key) continue;
+            size_t eq = line.find('=', s + key.size());
+            if (eq == string::npos) continue;
+            size_t vs = line.find_first_not_of(" \t", eq + 1);
+            if (vs == string::npos) continue;
+            size_t ve = line.find_last_not_of(" \t\r\n");
+            return line.substr(vs, ve - vs + 1);
+        }
+    }
+    return "";
+}
+
+static void openUrl(const string& url, bool useApp = false) {
+    string browser = useApp ? loadVerselumenSetting("browser") : "";
 #ifdef _WIN32
-    system(("start \"\" \"" + url + "\"").c_str());
+    if (!browser.empty())
+        system(("start \"\" \"" + browser + "\" \"" + url + "\"").c_str());
+    else
+        system(("start \"\" \"" + url + "\"").c_str());
 #elif defined(__APPLE__)
-    system(("open \"" + url + "\"").c_str());
+    if (!browser.empty())
+        system(("open -a \"" + browser + "\" \"" + url + "\"").c_str());
+    else if (useApp)
+        system(("open -a \"Google Chrome\" \"" + url + "\"").c_str());
+    else
+        system(("open \"" + url + "\"").c_str());
 #else
-    system(("xdg-open \"" + url + "\"").c_str());
+    if (!browser.empty())
+        system((browser + " \"" + url + "\" 2>/dev/null &").c_str());
+    else
+        system(("xdg-open \"" + url + "\"").c_str());
 #endif
 }
 
@@ -98,6 +137,7 @@ static string loadQueryFile() {
 
 int main(int argc, char* argv[]) {
     bool   openYoutube = false;
+    bool   useApp      = false;
     bool   planMode    = false;
     bool   refOnly     = false;
     bool   csvMode     = false;
@@ -108,7 +148,7 @@ int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; ++i) {
         string arg = argv[i];
         if (arg == "-v" || arg == "--version") {
-            cout << "day v1.0\n";
+            cout << "day v1.1\n";
             return 0;
         } else if (arg == "-h" || arg == "--help") {
             cout << "day — print the current day of the year (Jan 1 = 1)\n\n"
@@ -116,7 +156,9 @@ int main(int argc, char* argv[]) {
                  << "  (default)              Print day number only\n"
                  << "  -d=N, --day=N          Use day N instead of today\n"
                  << "  -d=mm/dd/yyyy          Use date instead of day number (4-digit or 2-digit year)\n"
-                 << "  -y, --youtube          Open YouTube Bible Recap search\n"
+                 << "  -y, --youtube          Open YouTube daily search\n"
+                 << "  -a, --app              Open YouTube in browser set by .verselumen browser=; implies -y\n"
+                 << "                         macOS default (no browser= set): Google Chrome\n"
                  << "  -q=TEXT, --query=TEXT  Override search query ({day} = day number); implies -y\n"
                  << "  -p, --plan             Print day number, date, and Bible reference\n"
                  << "  -r, --refonly          Print Bible reference only\n"
@@ -124,10 +166,12 @@ int main(int argc, char* argv[]) {
                  << "  -t, --tab              Output as TSV: day<TAB>date<TAB>reference\n"
                  << "  -v, --version          Print version\n"
                  << "  -h, --help             Show this help\n\n"
-                 << "Config file (.day in current dir or $HOME):\n"
-                 << "  First non-blank, non-comment line is used as the default query.\n"
-                 << "  Lines starting with # are ignored.\n"
-                 << "  Example contents:  Day {day} The Bible Recap\n\n"
+                 << "Config files (current dir or $HOME):\n"
+                 << "  .day          First non-blank, non-comment line is the default search query.\n"
+                 << "                Example:  Day {day} The Bible Recap\n"
+                 << "  .verselumen   Key=value settings. Supported keys:\n"
+                 << "                  browser=Firefox     # browser for -a (macOS default: Google Chrome)\n"
+                 << "                  macOS: app name for open -a; Windows: executable; Linux: command\n\n"
                  << "Examples:\n"
                  << "  day                               # print day number\n"
                  << "  day -r                            # print today's Bible reference\n"
@@ -144,6 +188,9 @@ int main(int argc, char* argv[]) {
             // no-op: day-only is now the default
         } else if (arg == "--youtube" || arg == "-y") {
             openYoutube = true;
+        } else if (arg == "--app" || arg == "-a") {
+            openYoutube = true;
+            useApp = true;
         } else if (arg.find("--query=") == 0) {
             queryTpl = arg.substr(8);
             openYoutube = true;
@@ -211,6 +258,6 @@ int main(int argc, char* argv[]) {
         while ((pos = q.find("{day}")) != string::npos)
             q.replace(pos, 5, dayStr);
 
-        openUrl("https://www.youtube.com/results?search_query=" + urlEncode(q));
+        openUrl("https://www.youtube.com/results?search_query=" + urlEncode(q), useApp);
     }
 }

@@ -203,7 +203,9 @@ bv --ref="John 3:16" | clip
 
 ## Configuration File
 
-`bv` reads defaults from the `[bv]` section of `.verselumen` in the current directory. Command-line arguments always override the config file.
+`bv` reads from `.verselumen` in the current directory, then `$HOME`. Command-line arguments always override config values.
+
+### `[bv]` section — bv-specific defaults
 
 Supported keys: `bv`, `refstyle`, `versequotes`, `plan`
 
@@ -226,6 +228,31 @@ Print effective settings and exit:
 ./bv --showconfig
 ./bv -bv=WEB --showconfig
 ```
+
+### Global keys (no section header)
+
+| Key | Description | Default |
+|-----|-------------|---------|
+| `browser` | Browser used by `-e` and `-g` | system default browser |
+
+Example `.verselumen` combining both:
+```
+browser=Google Chrome
+
+[bv]
+bv          = BSB
+refstyle    = 2
+versequotes = 0
+plan        = Sequential
+```
+
+The value means different things per platform:
+
+| Platform | Interpretation | Example values |
+|----------|---------------|----------------|
+| macOS | App name passed to `open -a` | `Google Chrome`, `Firefox`, `Safari`, `Arc` |
+| Windows | Executable name or path passed to `start` | `chrome`, `firefox`, `msedge` |
+| Linux | Command name invoked directly | `google-chrome`, `firefox`, `chromium` |
 
 To reset to built-in defaults, delete the `[bv]` section from `.verselumen` or remove the file entirely:
 ```bash

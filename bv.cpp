@@ -52,7 +52,7 @@ using namespace std;
 #define HOME_ENV "HOME"
 #endif
 
-const string VERSION = "1.21";
+const string VERSION = "1.22";
 const string CONFIG_FILE = ".verselumen";
 const string SECTION     = "bv";
 // Reading plans
@@ -1526,13 +1526,46 @@ string toGwUrl(const string& ref, const string& gwVersion) {
     return toGwUrl(vector<string>{ref}, gwVersion);
 }
 
+// Read a key=value from .verselumen without section filtering (global settings).
+static string loadGlobalSetting(const string& key) {
+    string paths[2] = {CONFIG_FILE, ""};
+    const char* home = getenv(HOME_ENV);
+    if (home) paths[1] = string(home) + "/" + CONFIG_FILE;
+    for (const string& path : paths) {
+        if (path.empty()) continue;
+        ifstream f(path);
+        if (!f.good()) continue;
+        string line;
+        while (getline(f, line)) {
+            if (!line.empty() && line.back() == '\r') line.pop_back();
+            size_t s = line.find_first_not_of(" \t");
+            if (s == string::npos || line[s] == '#') continue;
+            if (line.substr(s, key.size()) != key) continue;
+            size_t eq = line.find('=', s + key.size());
+            if (eq == string::npos) continue;
+            size_t vs = line.find_first_not_of(" \t", eq + 1);
+            if (vs == string::npos) continue;
+            size_t ve = line.find_last_not_of(" \t\r\n");
+            return line.substr(vs, ve - vs + 1);
+        }
+    }
+    return "";
+}
+
 void openEsvInBrowser(const string& url) {
+    string browser = loadGlobalSetting("browser");
 #ifdef _WIN32
-    string cmd = "start \"\" \"" + url + "\"";
+    string cmd = browser.empty()
+        ? "start \"\" \"" + url + "\""
+        : "start \"\" \"" + browser + "\" \"" + url + "\"";
 #elif defined(__APPLE__)
-    string cmd = "open \"" + url + "\"";
+    string cmd = browser.empty()
+        ? "open \"" + url + "\""
+        : "open -a \"" + browser + "\" \"" + url + "\"";
 #else
-    string cmd = "xdg-open \"" + url + "\"";
+    string cmd = browser.empty()
+        ? "xdg-open \"" + url + "\""
+        : browser + " \"" + url + "\" 2>/dev/null &";
 #endif
     system(cmd.c_str());
 }
@@ -1564,10 +1597,11 @@ void printHelp() {
     cout << "                          Sequential (aliases: Canonical, Straight Through)" << endl;
     cout << "                          Old and New Testament (aliases: OTNT, OT and NT)" << endl;
     cout << "  --refonly               With --day: print only the reference string, no verse text" << endl;
-    cout << "\nConfig file (.verselumen in current directory, [bv] section):" << endl;
+    cout << "\nConfig file (.verselumen in current directory or $HOME):" << endl;
     cout << "  --saveconfig            Save current settings to .verselumen [bv] as new defaults" << endl;
     cout << "  --showconfig            Print current effective settings and exit" << endl;
-    cout << "  Supported keys:  bv  refstyle  versequotes  plan" << endl;
+    cout << "  [bv] section keys:  bv  refstyle  versequotes  plan" << endl;
+    cout << "  Global keys (no section):  browser=Firefox   # used by -e and -g on macOS" << endl;
     cout << "\nExamples:" << endl;
     cout << "  bv --ref=\"John 3:16\"                    Single verse" << endl;
     cout << "  bv --ref=\"John 3:16,Romans 5:8\"         Multiple verses" << endl;

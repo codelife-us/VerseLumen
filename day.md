@@ -25,6 +25,7 @@ g++ -std=c++11 -o day day.cpp
 | `-d=N`, `--day=N` | Use day N instead of today |
 | `-d=mm/dd/yyyy` | Use a date instead of a day number (4-digit or 2-digit year) |
 | `-y`, `--youtube` | Open YouTube Bible Recap search |
+| `-a`, `--app` | Open YouTube in the browser set by `browser=` in `.verselumen`; macOS default (no setting): Google Chrome; implies `-y` |
 | `-q=TEXT`, `--query=TEXT` | Override the YouTube search query (`{day}` = day number); implies `-y` |
 | `-r`, `--refonly` | Print Bible reference only |
 | `-p`, `--plan` | Print day number, date, and Bible reference |
@@ -44,6 +45,28 @@ Day {day} The Bible Recap
 
 Query priority: `-q=` flag → `.day` in current dir → `.day` in `$HOME` / `%USERPROFILE%` → built-in default (`Day {day} The Bible Recap`).
 
+## Config file (.verselumen)
+
+The `.verselumen` file (current directory or `$HOME`) holds shared settings for VerseLumen tools. `day` reads the following global key (no section header required):
+
+| Key | Description | Default |
+|-----|-------------|---------|
+| `browser` | Browser used by `-a` | macOS: `Google Chrome`; others: system default |
+
+Example:
+```
+# .verselumen
+browser=Firefox
+```
+
+The value means different things per platform:
+
+| Platform | Interpretation | Example values |
+|----------|---------------|----------------|
+| macOS | App name passed to `open -a` | `Google Chrome`, `Firefox`, `Safari`, `Arc` |
+| Windows | Executable name or path passed to `start` | `chrome`, `firefox`, `msedge` |
+| Linux | Command name invoked directly | `google-chrome`, `firefox`, `chromium` |
+
 ## Examples
 
 Print today's day number:
@@ -54,6 +77,12 @@ Print today's day number:
 Open YouTube for today's Bible Recap:
 ```bash
 ./day -y
+```
+
+Open YouTube in Google Chrome (or the browser set in `.verselumen`):
+```bash
+./day -a
+./day -d=203 -a
 ```
 
 Open YouTube for a specific day or date:
